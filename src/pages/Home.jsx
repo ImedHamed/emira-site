@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPhoneAlt, FaChevronRight, FaCheckCircle, FaStar, FaHandshake } from 'react-icons/fa'
 import { HiLightningBolt } from 'react-icons/hi'
 import { useLanguage } from '../i18n/LanguageContext'
+import { getIcon } from '../components/IconMap'
 import ScrollReveal from '../components/ScrollReveal'
 import './Home.css'
 
@@ -36,16 +37,50 @@ function Counter({ end, suffix = '', duration = 2000 }) {
     return <span ref={ref}>{count}{suffix}</span>
 }
 
-const clients = [
+// Fallback clients for the ticker (used before API loads)
+const fallbackClients = [
     'STEG', 'Tunisie Télécom', 'ONAS', 'ONT',
     'Ministère de la Santé', 'Ministère de l\'Agriculture',
     'CNSS', 'Hôpital Rabta', 'OCT', 'SNCFT',
 ]
 
 export default function Home() {
-    const { t } = useLanguage()
+    const { language, t } = useLanguage()
+    const [servicesData, setServicesData] = useState([])
+    const [clientNames, setClientNames] = useState(fallbackClients)
 
-    const services = [
+    useEffect(() => {
+        // Fetch services for preview (first 6)
+        fetch('/api/services')
+            .then(res => res.json())
+            .then(data => {
+                if (data.services) setServicesData(data.services.slice(0, 6))
+            })
+            .catch(() => { })
+
+        // Fetch clients for ticker
+        fetch('/api/clients')
+            .then(res => res.json())
+            .then(data => {
+                if (data.publicClients) {
+                    const names = data.publicClients.slice(0, 10).map(c =>
+                        c.name?.fr || (typeof c.name === 'string' ? c.name : '')
+                    ).filter(Boolean)
+                    if (names.length > 0) setClientNames(names)
+                }
+            })
+            .catch(() => { })
+    }, [])
+
+    // Build services for display using API data
+    const services = servicesData.map(srv => ({
+        icon: getIcon(srv.iconName),
+        title: srv.title?.[language] || srv.title?.fr || '',
+        desc: srv.desc?.[language] || srv.desc?.fr || '',
+    }))
+
+    // Fallback services if API hasn't loaded yet
+    const fallbackServicesList = [
         { icon: <FaBolt />, title: t('home.serviceElec'), desc: t('home.serviceElecDesc') },
         { icon: <FaTools />, title: t('home.serviceArmoires'), desc: t('home.serviceArmoiresDesc') },
         { icon: <FaCog />, title: t('home.serviceRebobinage'), desc: t('home.serviceRebobinageDesc') },
@@ -53,6 +88,8 @@ export default function Home() {
         { icon: <HiLightningBolt />, title: t('home.serviceGroupes'), desc: t('home.serviceGroupesDesc') },
         { icon: <FaShieldAlt />, title: t('home.serviceQualite'), desc: t('home.serviceQualiteDesc') },
     ]
+
+    const displayServices = services.length > 0 ? services : fallbackServicesList
 
     return (
         <div className="home">
@@ -150,7 +187,7 @@ export default function Home() {
                         </div>
                     </ScrollReveal>
                     <div className="services-grid">
-                        {services.map((service, i) => (
+                        {displayServices.map((service, i) => (
                             <ScrollReveal key={i} delay={i * 80}>
                                 <div className="service-card">
                                     <div className="service-icon">{service.icon}</div>
@@ -184,7 +221,7 @@ export default function Home() {
                     <ScrollReveal>
                         <div className="clients-ticker">
                             <div className="ticker-track">
-                                {[...clients, ...clients].map((client, i) => (
+                                {[...clientNames, ...clientNames].map((client, i) => (
                                     <div key={i} className="client-badge">{client}</div>
                                 ))}
                             </div>

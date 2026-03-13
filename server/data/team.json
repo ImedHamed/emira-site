@@ -1,0 +1,34 @@
+{
+    "team": [
+        {
+            "id": 1,
+            "name": "Maher ZOUARI",
+            "role": {
+                "fr": "Gérant",
+                "en": "Manager"
+            },
+            "phone": "20 832 832 / 50 832 259",
+            "iconName": "FaUsers"
+        },
+        {
+            "id": 2,
+            "name": "Imen Maaoui",
+            "role": {
+                "fr": "Ingénieur INSAT",
+                "en": "INSAT Engineer"
+            },
+            "phone": "52 515 171",
+            "iconName": "FaAward"
+        },
+        {
+            "id": 3,
+            "name": "Habib ben AMOR",
+            "role": {
+                "fr": "Technicien Supérieur Génie Élec.",
+                "en": "Senior Electrical Technician"
+            },
+            "phone": "98 286 558 / 53 227 260",
+            "iconName": "FaUsers"
+        }
+    ]
+}
