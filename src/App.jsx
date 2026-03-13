@@ -8,6 +8,7 @@ import About from './pages/About'
 import Services from './pages/Services'
 import Clients from './pages/Clients'
 import Contact from './pages/Contact'
+import Admin from './pages/Admin'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -18,10 +19,13 @@ function ScrollToTop() {
 }
 
 function App() {
+  const location = useLocation()
+  const isAdmin = location.pathname === '/admin'
+
   return (
     <LanguageProvider>
       <ScrollToTop />
-      <Navbar />
+      {!isAdmin && <Navbar />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -29,9 +33,10 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/clients" element={<Clients />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAdmin && <Footer />}
     </LanguageProvider>
   )
 }

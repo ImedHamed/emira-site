@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react'
 import { FaAward, FaUsers, FaHistory, FaPhoneAlt, FaEnvelope, FaBolt, FaCheckCircle } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
+import { getIcon } from '../components/IconMap'
 import ScrollReveal from '../components/ScrollReveal'
 import './About.css'
 
@@ -33,21 +35,23 @@ const certifications = [
         icon: <FaCheckCircle />,
     },
     {
-        title: 'SARL — 150.000 DT',
-        desc: { fr: 'Société à Responsabilité Limitée au capital de 150.000 DT', en: 'Limited Liability Company with a capital of 150,000 DT' },
+        title: 'SARL — 200.000 DT',
+        desc: { fr: 'Société à Responsabilité Limitée au capital de 200.000 DT', en: 'Limited Liability Company with a capital of 200,000 DT' },
         icon: <FaBolt />,
     },
-]
-
-const team = [
-    { name: 'Maher ZOUARI', role: { fr: 'Gérant', en: 'Manager' }, phone: '20 832 832 / 50 832 259', icon: <FaUsers /> },
-    { name: 'Imen Maaoui', role: { fr: 'Ingénieur INSAT', en: 'INSAT Engineer' }, phone: '52 515 171', icon: <FaAward /> },
-    { name: 'Habib ben AMOR', role: { fr: 'Technicien Supérieur Génie Élec.', en: 'Senior Electrical Technician' }, phone: '98 286 558 / 53 227 260', icon: <FaUsers /> },
 ]
 
 export default function About() {
     const { language, t } = useLanguage()
     const timeline = timelineData[language] || timelineData.fr
+    const [team, setTeam] = useState([])
+
+    useEffect(() => {
+        fetch('/api/team')
+            .then(res => res.json())
+            .then(data => { if (data.team) setTeam(data.team) })
+            .catch(() => { })
+    }, [])
 
     const aboutP1 = language === 'en'
         ? "Founded in 1987, <strong>EMIRA</strong> (Electro Maintenance Intervention Rapide) is a Tunisian company specialized in electrical installations, industrial maintenance and emergency repairs."
@@ -151,7 +155,7 @@ export default function About() {
                         {team.map((member, i) => (
                             <ScrollReveal key={i} delay={i * 100}>
                                 <div className="team-card">
-                                    <div className="team-avatar">{member.icon}</div>
+                                    <div className="team-avatar">{getIcon(member.iconName)}</div>
                                     <h3>{member.name}</h3>
                                     <span className="team-role">{member.role[language] || member.role.fr}</span>
                                     <a href={`tel:+216${member.phone.split(' / ')[0].replace(/\s/g, '')}`} className="team-phone">

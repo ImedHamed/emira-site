@@ -1,23 +1,148 @@
 const express = require('express')
 const cors = require('cors')
 const nodemailer = require('nodemailer')
+const fs = require('fs')
+const path = require('path')
+const crypto = require('crypto')
 
 const app = express()
 const PORT = 5000
 
+// ── Config ──
+const ADMIN_PASSWORD = 'emira2024admin'
+const TOKEN_SECRET = crypto.randomBytes(32).toString('hex')
+const activeTokens = new Set()
+
+// ── Data file paths ──
+const DATA_DIR = path.join(__dirname, 'data')
+const SERVICES_FILE = path.join(DATA_DIR, 'services.json')
+const CLIENTS_FILE = path.join(DATA_DIR, 'clients.json')
+const TEAM_FILE = path.join(DATA_DIR, 'team.json')
+
 // ── Middleware ──
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 
+// ── Helper: read/write JSON ──
+function readJSON(filePath) {
+    try {
+        return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+    } catch {
+        return null
+    }
+}
+
+function writeJSON(filePath, data) {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
+}
+
+// ── Auth Middleware ──
+function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Non autorisé' })
+    }
+    const token = authHeader.split(' ')[1]
+    if (!activeTokens.has(token)) {
+        return res.status(401).json({ success: false, error: 'Token invalide' })
+    }
+    next()
+}
+
+// ══════════════════════════════════════
+// ── Admin Auth ──
+// ══════════════════════════════════════
+
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body
+    if (password === ADMIN_PASSWORD) {
+        const token = crypto.randomBytes(48).toString('hex')
+        activeTokens.add(token)
+        console.log('🔐 Admin logged in')
+        res.json({ success: true, token })
+    } else {
+        res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
+    }
+})
+
+app.post('/api/admin/logout', requireAuth, (req, res) => {
+    const token = req.headers.authorization.split(' ')[1]
+    activeTokens.delete(token)
+    res.json({ success: true })
+})
+
+// ══════════════════════════════════════
+// ── Services API ──
+// ══════════════════════════════════════
+
+app.get('/api/services', (req, res) => {
+    const data = readJSON(SERVICES_FILE)
+    if (!data) return res.status(500).json({ success: false, error: 'Erreur lecture données' })
+    res.json(data)
+})
+
+app.put('/api/services', requireAuth, (req, res) => {
+    try {
+        writeJSON(SERVICES_FILE, req.body)
+        console.log('✅ Services updated')
+        res.json({ success: true, message: 'Services mis à jour' })
+    } catch (error) {
+        console.error('❌ Error saving services:', error)
+        res.status(500).json({ success: false, error: 'Erreur sauvegarde' })
+    }
+})
+
+// ══════════════════════════════════════
+// ── Clients API ──
+// ══════════════════════════════════════
+
+app.get('/api/clients', (req, res) => {
+    const data = readJSON(CLIENTS_FILE)
+    if (!data) return res.status(500).json({ success: false, error: 'Erreur lecture données' })
+    res.json(data)
+})
+
+app.put('/api/clients', requireAuth, (req, res) => {
+    try {
+        writeJSON(CLIENTS_FILE, req.body)
+        console.log('✅ Clients updated')
+        res.json({ success: true, message: 'Clients mis à jour' })
+    } catch (error) {
+        console.error('❌ Error saving clients:', error)
+        res.status(500).json({ success: false, error: 'Erreur sauvegarde' })
+    }
+})
+
+// ══════════════════════════════════════
+// ── Team API ──
+// ══════════════════════════════════════
+
+app.get('/api/team', (req, res) => {
+    const data = readJSON(TEAM_FILE)
+    if (!data) return res.status(500).json({ success: false, error: 'Erreur lecture données' })
+    res.json(data)
+})
+
+app.put('/api/team', requireAuth, (req, res) => {
+    try {
+        writeJSON(TEAM_FILE, req.body)
+        console.log('✅ Team updated')
+        res.json({ success: true, message: 'Équipe mise à jour' })
+    } catch (error) {
+        console.error('❌ Error saving team:', error)
+        res.status(500).json({ success: false, error: 'Erreur sauvegarde' })
+    }
+})
+
+// ══════════════════════════════════════
 // ── Gmail SMTP Configuration ──
-// You need a Gmail App Password (not your normal password)
-// Go to: https://myaccount.google.com/apppasswords
-// Generate one for "Mail" → "Windows Computer"
+// ══════════════════════════════════════
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'fekheryahya@gmail.com',        // your Gmail
-        pass: 'wepxfbsbsxrvmsvv',        // Gmail App Password (16 chars)
+        user: 'fekheryahya@gmail.com',
+        pass: 'wepxfbsbsxrvmsvv',
     },
 })
 
@@ -97,11 +222,10 @@ function buildEmailHTML({ name, email, phone, subject, message, services, date }
 </html>`
 }
 
-// ── API Endpoint ──
+// ── Contact API Endpoint ──
 app.post('/api/contact', async (req, res) => {
     const { name, email, phone, subject, message, services } = req.body
 
-    // Validation
     if (!name || !email || !subject || !message) {
         return res.status(400).json({ success: false, error: 'Champs requis manquants' })
     }
@@ -135,5 +259,9 @@ app.post('/api/contact', async (req, res) => {
 // ── Start Server ──
 app.listen(PORT, () => {
     console.log(`\n⚡ EMIRA Backend running on http://localhost:${PORT}`)
-    console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact\n`)
+    console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact`)
+    console.log(`🔧 Services API: GET/PUT http://localhost:${PORT}/api/services`)
+    console.log(`👥 Clients API: GET/PUT http://localhost:${PORT}/api/clients`)
+    console.log(`👤 Team API: GET/PUT http://localhost:${PORT}/api/team`)
+    console.log(`🔐 Admin Login: POST http://localhost:${PORT}/api/admin/login\n`)
 })

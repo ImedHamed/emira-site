@@ -1,44 +1,28 @@
-import { useState } from 'react'
-import { FaPhone, FaFax, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaClock, FaCheckCircle, FaTimes, FaBolt, FaTools, FaCog, FaPlug, FaIndustry, FaShieldAlt, FaTachometerAlt, FaLeaf, FaWrench, FaHardHat } from 'react-icons/fa'
-import { HiLightningBolt } from 'react-icons/hi'
+import { useState, useEffect } from 'react'
+import { FaPhone, FaFax, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaClock, FaCheckCircle, FaTimes } from 'react-icons/fa'
 import { useLanguage } from '../i18n/LanguageContext'
+import { getIcon } from '../components/IconMap'
 import ScrollReveal from '../components/ScrollReveal'
 import './Contact.css'
 
-const servicesListData = {
-    fr: [
-        { id: 'install_mt_bt', label: 'Installation Électrique MT/BT', icon: <FaBolt /> },
-        { id: 'armoires', label: 'Armoires & Coffrets Électriques', icon: <FaTools /> },
-        { id: 'rebobinage', label: 'Rebobinage Moteurs & Alternateurs', icon: <FaCog /> },
-        { id: 'transformateurs', label: 'Postes de Transformation MT/BT', icon: <FaPlug /> },
-        { id: 'depannage', label: 'Assistance & Dépannage Industriel', icon: <FaIndustry /> },
-        { id: 'groupes', label: 'Groupes Électrogènes', icon: <HiLightningBolt /> },
-        { id: 'qualite', label: 'Qualité de Puissance & Harmoniques', icon: <FaTachometerAlt /> },
-        { id: 'energie', label: "Économie d'Énergie", icon: <FaLeaf /> },
-        { id: 'maintenance', label: 'Maintenance Générale', icon: <FaWrench /> },
-        { id: 'travaux_neufs', label: 'Travaux Neufs', icon: <FaHardHat /> },
-        { id: 'equipement', label: 'Équipement Électrique MT/BT', icon: <FaShieldAlt /> },
-        { id: 'main_oeuvre', label: "Location de Main d'Œuvre", icon: <FaTools /> },
-    ],
-    en: [
-        { id: 'install_mt_bt', label: 'MV/LV Electrical Installation', icon: <FaBolt /> },
-        { id: 'armoires', label: 'Electrical Cabinets & Enclosures', icon: <FaTools /> },
-        { id: 'rebobinage', label: 'Motor & Alternator Rewinding', icon: <FaCog /> },
-        { id: 'transformateurs', label: 'MV/LV Transformation Stations', icon: <FaPlug /> },
-        { id: 'depannage', label: 'Industrial Troubleshooting', icon: <FaIndustry /> },
-        { id: 'groupes', label: 'Power Generators', icon: <HiLightningBolt /> },
-        { id: 'qualite', label: 'Power Quality & Harmonics', icon: <FaTachometerAlt /> },
-        { id: 'energie', label: 'Energy Savings', icon: <FaLeaf /> },
-        { id: 'maintenance', label: 'General Maintenance', icon: <FaWrench /> },
-        { id: 'travaux_neufs', label: 'New Construction', icon: <FaHardHat /> },
-        { id: 'equipement', label: 'MV/LV Electrical Equipment', icon: <FaShieldAlt /> },
-        { id: 'main_oeuvre', label: 'Labor Rental', icon: <FaTools /> },
-    ],
-}
-
 export default function Contact() {
     const { language, t } = useLanguage()
-    const servicesList = servicesListData[language] || servicesListData.fr
+    const [servicesList, setServicesList] = useState([])
+
+    useEffect(() => {
+        fetch('/api/services')
+            .then(res => res.json())
+            .then(data => {
+                if (data.services) {
+                    setServicesList(data.services.map(srv => ({
+                        id: `srv_${srv.id}`,
+                        label: srv.title?.[language] || srv.title?.fr || '',
+                        icon: getIcon(srv.iconName),
+                    })))
+                }
+            })
+            .catch(() => { })
+    }, [language])
 
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
     const [submitted, setSubmitted] = useState(false)
@@ -57,7 +41,7 @@ export default function Contact() {
             .map(s => s.label)
 
         try {
-            const response = await fetch('http://localhost:5000/api/contact', {
+            const response = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
