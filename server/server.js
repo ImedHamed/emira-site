@@ -1,6 +1,6 @@
-const express = require('express')
-const cors = require('cors')
-const nodemailer = require('nodemailer')
+import express from 'express'
+import cors from 'cors'
+import nodemailer from 'nodemailer'
 
 const app = express()
 const PORT = 5000
@@ -16,8 +16,8 @@ app.use(express.json())
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'fekheryahya@gmail.com',        // your Gmail
-        pass: 'wepxfbsbsxrvmsvv',        // Gmail App Password (16 chars)
+        user: 'med.hm17@gmail.com',        // your Gmail
+        pass: 'hscrgpngpeylcsqr',        // Gmail App Password (16 chars)
     },
 })
 
@@ -115,7 +115,7 @@ app.post('/api/contact', async (req, res) => {
     })
 
     const mailOptions = {
-        from: `"${name} via EMIRA" <fekheryahya@gmail.com>`,
+        from: `"${name} via EMIRA" <med.hm17@gmail.com>`,
         replyTo: email,
         to: 'imedbenamor.hm@gmail.com',
         subject: `EMIRA — ${subject}`,
