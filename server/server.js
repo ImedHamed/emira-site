@@ -1,14 +1,231 @@
 import express from 'express'
 import cors from 'cors'
 import nodemailer from 'nodemailer'
+import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
+import db from './db.js'
 
 const app = express()
 const PORT = 5000
+
+
+// ── Config ──
+const TOKEN_SECRET = crypto.randomBytes(32).toString('hex')
+const activeTokens = new Set()
 
 // ── Middleware ──
 app.use(cors())
 app.use(express.json())
 
+
+// ── Auth Middleware ──
+function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Non autorisé' })
+    }
+    const token = authHeader.split(' ')[1]
+    if (!activeTokens.has(token)) {
+        return res.status(401).json({ success: false, error: 'Token invalide' })
+    }
+    next()
+}
+
+// ══════════════════════════════════════
+// ── Admin Auth ──
+// ══════════════════════════════════════
+
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body
+    const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get('admin')
+    if (admin && bcrypt.compareSync(password, admin.password_hash)) {
+        const token = crypto.randomBytes(48).toString('hex')
+        activeTokens.add(token)
+        console.log('🔐 Admin logged in')
+        res.json({ success: true, token })
+    } else {
+        res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
+    }
+})
+
+app.post('/api/admin/logout', requireAuth, (req, res) => {
+    const token = req.headers.authorization.split(' ')[1]
+    activeTokens.delete(token)
+    res.json({ success: true })
+})
+
+// ══════════════════════════════════════
+// ── Services API ──
+// ══════════════════════════════════════
+
+app.get('/api/services', (req, res) => {
+    try {
+        const rows = db.prepare('SELECT * FROM services ORDER BY id').all()
+        const services = rows.map(s => {
+            const features = db.prepare(
+                'SELECT text_fr, text_en FROM service_features WHERE service_id = ? ORDER BY sort_order'
+            ).all(s.id)
+            return {
+                id: s.id,
+                iconName: s.icon_name,
+                title: { fr: s.title_fr, en: s.title_en },
+                desc: { fr: s.desc_fr, en: s.desc_en },
+                features: {
+                    fr: features.map(f => f.text_fr),
+                    en: features.map(f => f.text_en)
+                }
+            }
+        })
+        res.json({ services })
+    } catch (error) {
+        console.error('❌ Error reading services:', error)
+        res.status(500).json({ success: false, error: 'Erreur lecture données' })
+    }
+})
+
+app.put('/api/services', requireAuth, (req, res) => {
+    try {
+        const { services } = req.body
+        const updateAll = db.transaction(() => {
+            db.prepare('DELETE FROM service_features').run()
+            db.prepare('DELETE FROM services').run()
+
+            const insertService = db.prepare(
+                'INSERT INTO services (id, icon_name, title_fr, title_en, desc_fr, desc_en) VALUES (?, ?, ?, ?, ?, ?)'
+            )
+            const insertFeature = db.prepare(
+                'INSERT INTO service_features (service_id, text_fr, text_en, sort_order) VALUES (?, ?, ?, ?)'
+            )
+
+            for (const s of services) {
+                insertService.run(s.id, s.iconName, s.title.fr, s.title.en, s.desc.fr, s.desc.en)
+                if (s.features) {
+                    const frFeatures = s.features.fr || []
+                    const enFeatures = s.features.en || []
+                    for (let i = 0; i < frFeatures.length; i++) {
+                        insertFeature.run(s.id, frFeatures[i], enFeatures[i] || frFeatures[i], i)
+                    }
+                }
+            }
+        })
+        updateAll()
+        console.log('✅ Services updated')
+        res.json({ success: true, message: 'Services mis à jour' })
+    } catch (error) {
+        console.error('❌ Error saving services:', error)
+        res.status(500).json({ success: false, error: 'Erreur sauvegarde' })
+    }
+})
+
+// ══════════════════════════════════════
+// ── Clients API ──
+// ══════════════════════════════════════
+
+app.get('/api/clients', (req, res) => {
+    try {
+        const publicRows = db.prepare('SELECT * FROM public_clients ORDER BY id').all()
+        const privateRows = db.prepare('SELECT * FROM private_clients ORDER BY id').all()
+        const regionRows = db.prepare('SELECT name FROM regions ORDER BY id').all()
+
+        const mapClient = c => ({
+            id: c.id,
+            name: { fr: c.name_fr, en: c.name_en },
+            desc: { fr: c.desc_fr, en: c.desc_en },
+            iconName: c.icon_name
+        })
+
+        res.json({
+            publicClients: publicRows.map(mapClient),
+            privateClients: privateRows.map(mapClient),
+            regions: regionRows.map(r => r.name)
+        })
+    } catch (error) {
+        console.error('❌ Error reading clients:', error)
+        res.status(500).json({ success: false, error: 'Erreur lecture données' })
+    }
+})
+
+app.put('/api/clients', requireAuth, (req, res) => {
+    try {
+        const { publicClients, privateClients, regions } = req.body
+        const updateAll = db.transaction(() => {
+            // ── Public clients ──
+            db.prepare('DELETE FROM public_clients').run()
+            const insertPub = db.prepare(
+                'INSERT INTO public_clients (id, icon_name, name_fr, name_en, desc_fr, desc_en) VALUES (?, ?, ?, ?, ?, ?)'
+            )
+            for (const c of publicClients) {
+                insertPub.run(c.id, c.iconName, c.name.fr, c.name.en, c.desc.fr, c.desc.en)
+            }
+
+            // ── Private clients ──
+            db.prepare('DELETE FROM private_clients').run()
+            const insertPriv = db.prepare(
+                'INSERT INTO private_clients (id, icon_name, name_fr, name_en, desc_fr, desc_en) VALUES (?, ?, ?, ?, ?, ?)'
+            )
+            for (const c of privateClients) {
+                insertPriv.run(c.id, c.iconName, c.name.fr, c.name.en, c.desc.fr, c.desc.en)
+            }
+
+            // ── Regions ──
+            db.prepare('DELETE FROM regions').run()
+            const insertRegion = db.prepare('INSERT INTO regions (name) VALUES (?)')
+            for (const r of regions) {
+                insertRegion.run(r)
+            }
+        })
+        updateAll()
+        console.log('✅ Clients updated')
+        res.json({ success: true, message: 'Clients mis à jour' })
+    } catch (error) {
+        console.error('❌ Error saving clients:', error)
+        res.status(500).json({ success: false, error: 'Erreur sauvegarde' })
+    }
+})
+
+// ══════════════════════════════════════
+// ── Team API ──
+// ══════════════════════════════════════
+
+app.get('/api/team', (req, res) => {
+    try {
+        const rows = db.prepare('SELECT * FROM team ORDER BY id').all()
+        const team = rows.map(t => ({
+            id: t.id,
+            name: t.name,
+            role: { fr: t.role_fr, en: t.role_en },
+            phone: t.phone,
+            iconName: t.icon_name
+        }))
+        res.json({ team })
+    } catch (error) {
+        console.error('❌ Error reading team:', error)
+        res.status(500).json({ success: false, error: 'Erreur lecture données' })
+    }
+})
+
+app.put('/api/team', requireAuth, (req, res) => {
+    try {
+        const { team } = req.body
+        const updateAll = db.transaction(() => {
+            db.prepare('DELETE FROM team').run()
+            const insertTeam = db.prepare(
+                'INSERT INTO team (id, name, role_fr, role_en, phone, icon_name) VALUES (?, ?, ?, ?, ?, ?)'
+            )
+            for (const t of team) {
+                insertTeam.run(t.id, t.name, t.role.fr, t.role.en, t.phone, t.iconName)
+            }
+        })
+        updateAll()
+        console.log('✅ Team updated')
+        res.json({ success: true, message: 'Équipe mise à jour' })
+    } catch (error) {
+        console.error('❌ Error saving team:', error)
+        res.status(500).json({ success: false, error: 'Erreur sauvegarde' })
+    }
+})
+
+// ══════════════════════════════════════
 // ── Gmail SMTP Configuration ──
 // You need a Gmail App Password (not your normal password)
 // Go to: https://myaccount.google.com/apppasswords
@@ -16,8 +233,8 @@ app.use(express.json())
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'med.hm17@gmail.com',        // your Gmail
-        pass: 'hscrgpngpeylcsqr',        // Gmail App Password (16 chars)
+        user: 'emira.devis@gmail.com',        // your Gmail
+        pass: 'aitfhowlggwdcqep',        // Gmail App Password (16 chars)
     },
 })
 
@@ -117,7 +334,7 @@ app.post('/api/contact', async (req, res) => {
     const mailOptions = {
         from: `"${name} via EMIRA" <med.hm17@gmail.com>`,
         replyTo: email,
-        to: 'imedbenamor.hm@gmail.com',
+        to: 'emia.devis@gmail.com',
         subject: `EMIRA — ${subject}`,
         html: buildEmailHTML({ name, email, phone, subject, message, services, date }),
     }
