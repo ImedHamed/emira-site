@@ -18,7 +18,8 @@ app.use(cors({
         'http://localhost:5173',
         'http://localhost:4173',
         'https://www.emira-service.com',
-        'https://emira-service.com'
+        'https://emira-service.com',
+        'https://emira-site.vercel.app'
     ],
     credentials: true
 }))
