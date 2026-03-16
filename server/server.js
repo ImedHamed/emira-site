@@ -332,9 +332,9 @@ app.post('/api/contact', async (req, res) => {
     })
 
     const mailOptions = {
-        from: `"${name} via EMIRA" <med.hm17@gmail.com>`,
+        from: `"${name} via EMIRA" <emira.devis@gmail.com>`,
         replyTo: email,
-        to: 'emia.devis@gmail.com',
+        to: 'emira.devis@gmail.com',
         subject: `EMIRA — ${subject}`,
         html: buildEmailHTML({ name, email, phone, subject, message, services, date }),
     }
