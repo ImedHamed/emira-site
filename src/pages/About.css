@@ -101,6 +101,84 @@
     color: #22c55e;
 }
 
+/* ====== EQUIPMENT GALLERY ====== */
+.equipment-section {
+    padding: var(--section-padding);
+    background: var(--gray-50);
+}
+
+.equipment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.equipment-card {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+}
+
+.equipment-card--wide {
+    grid-column: span 2;
+}
+
+.equipment-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-xl);
+}
+
+.equipment-img-wrap {
+    position: relative;
+    overflow: hidden;
+    height: 280px;
+}
+
+.equipment-card--wide .equipment-img-wrap {
+    height: 320px;
+}
+
+.equipment-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.equipment-card:hover .equipment-img-wrap img {
+    transform: scale(1.1);
+}
+
+.equipment-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.2) 50%, transparent 100%);
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.equipment-card:hover .equipment-overlay {
+    opacity: 1;
+}
+
+.equipment-label {
+    color: #ffffff !important;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    transform: translateY(10px);
+    transition: transform var(--transition-base);
+}
+
+.equipment-card:hover .equipment-label {
+    transform: translateY(0);
+}
+
 /* ====== TIMELINE ====== */
 .timeline-section {
     padding: var(--section-padding);
@@ -300,6 +378,14 @@
         justify-content: center;
     }
 
+    .equipment-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .equipment-card--wide {
+        grid-column: span 2;
+    }
+
     .team-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -317,6 +403,19 @@
     .timeline-content {
         width: calc(100% - 50px);
         margin-left: 50px !important;
+    }
+
+    .equipment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .equipment-card--wide {
+        grid-column: span 1;
+    }
+
+    .equipment-img-wrap,
+    .equipment-card--wide .equipment-img-wrap {
+        height: 220px;
     }
 
     .team-grid {
