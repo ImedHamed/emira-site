@@ -3,6 +3,7 @@ import { FaAward, FaUsers, FaHistory, FaPhoneAlt, FaEnvelope, FaBolt, FaCheckCir
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './About.css'
 
@@ -47,7 +48,7 @@ export default function About() {
     const [team, setTeam] = useState([])
 
     useEffect(() => {
-        fetch('/api/team')
+        fetch(`${API_URL}/api/team`)
             .then(res => res.json())
             .then(data => { if (data.team) setTeam(data.team) })
             .catch(() => { })

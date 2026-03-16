@@ -4,6 +4,7 @@ import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPhoneAlt, FaChevronR
 import { HiLightningBolt } from 'react-icons/hi'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Home.css'
 
@@ -51,7 +52,7 @@ export default function Home() {
 
     useEffect(() => {
         // Fetch services for preview (first 6)
-        fetch('/api/services')
+        fetch(`${API_URL}/api/services`)
             .then(res => res.json())
             .then(data => {
                 if (data.services) setServicesData(data.services.slice(0, 6))
@@ -59,7 +60,7 @@ export default function Home() {
             .catch(() => { })
 
         // Fetch clients for ticker
-        fetch('/api/clients')
+        fetch(`${API_URL}/api/clients`)
             .then(res => res.json())
             .then(data => {
                 if (data.publicClients) {

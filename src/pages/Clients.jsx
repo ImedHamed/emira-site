@@ -3,6 +3,7 @@ import { FaMapMarkerAlt, FaPhoneAlt, FaChevronRight } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Clients.css'
 
@@ -13,7 +14,7 @@ export default function Clients() {
     const [regions, setRegions] = useState([])
 
     useEffect(() => {
-        fetch('/api/clients')
+        fetch(`${API_URL}/api/clients`)
             .then(res => res.json())
             .then(data => {
                 if (data.publicClients) setPublicClients(data.publicClients)

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPlug, FaTachometerAlt, FaLeaf, FaWrench, FaHardHat, FaBuilding, FaLandmark, FaHotel, FaHospital, FaUniversity, FaPlus, FaPen, FaTrash, FaTimes, FaArrowLeft, FaSignOutAlt, FaSave, FaMapMarkerAlt, FaUsers, FaAward, FaPhoneAlt } from 'react-icons/fa'
 import { HiLightningBolt } from 'react-icons/hi'
+import { API_URL as API } from '../api'
 import './Admin.css'
 
 // ── Icon Map ──
@@ -15,8 +16,6 @@ const ICON_MAP = {
     FaUsers: <FaUsers />, FaAward: <FaAward />, FaPhoneAlt: <FaPhoneAlt />,
 }
 const ICON_NAMES = Object.keys(ICON_MAP)
-
-const API = ''  // empty = same origin (vite proxy)
 
 // ══════════════════════════════════════
 //   LOGIN SCREEN

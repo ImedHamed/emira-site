@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { FaPhone, FaFax, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaClock, FaCheckCircle, FaTimes } from 'react-icons/fa'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Contact.css'
 
@@ -10,7 +11,7 @@ export default function Contact() {
     const [servicesList, setServicesList] = useState([])
 
     useEffect(() => {
-        fetch('/api/services')
+        fetch(`${API_URL}/api/services`)
             .then(res => res.json())
             .then(data => {
                 if (data.services) {
@@ -41,7 +42,7 @@ export default function Contact() {
             .map(s => s.label)
 
         try {
-            const response = await fetch('/api/contact', {
+            const response = await fetch(`${API_URL}/api/contact`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
