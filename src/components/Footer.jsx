@@ -76,7 +76,7 @@ export default function Footer() {
                                 <li><FaMapMarkerAlt /><span>Route de Sousse Km6, Mégrine 2033</span></li>
                                 <li><FaPhone /><a href="tel:+21671432099">71 432 099</a></li>
                                 <li><FaFax /><span>71 433 458</span></li>
-                                <li><FaEnvelope /><a href="mailto:emira@emira.com.tn">emira@emira.com.tn</a></li>
+                                <li><FaEnvelope /><a href=" mailto:emira@emira.com.tn">emira@emira.com.tn</a></li>
                             </ul>
                             <div className="footer-emergency">
                                 <FaPhone className="pulse-icon" />

@@ -156,7 +156,6 @@ export default function Contact() {
                                             <p>71 433 458</p>
                                         </div>
                                     </div>
-                                    {/* mail */}
                                     <div className="info-card">
                                         <div className="info-icon"><FaEnvelope /></div>
                                         <div>
