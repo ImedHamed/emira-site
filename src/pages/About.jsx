@@ -65,11 +65,7 @@ const certifications = [
     },
     {
         title: 'SARL — 250.000 DT',
-<<<<<<< HEAD
         desc: { fr: 'Société à Responsabilité Limitée au capital de 250.000 DT', en: 'Limited Liability Company with a capital of 200,000 DT' },
-=======
-        desc: { fr: 'Société à Responsabilité Limitée au capital de 250.000 DT', en: 'Limited Liability Company with a capital of 250,000 DT' },
->>>>>>> 1a7b84cd1a55e33b9d39c5885ac8b813d431e2d2
         icon: <FaBolt />,
     },
 ]
