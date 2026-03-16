@@ -1,22 +1,29 @@
-import express from 'express'
-import cors from 'cors'
-import nodemailer from 'nodemailer'
-import crypto from 'crypto'
-import bcrypt from 'bcryptjs'
-import db from './db.js'
+const express = require('express')
+const cors = require('cors')
+const nodemailer = require('nodemailer')
+const crypto = require('crypto')
+const bcrypt = require('bcryptjs')
+const db = require('./db')
 
 const app = express()
-const PORT = 5000
-
+const PORT = process.env.PORT || 5000
 
 // ── Config ──
 const TOKEN_SECRET = crypto.randomBytes(32).toString('hex')
 const activeTokens = new Set()
 
 // ── Middleware ──
-app.use(cors())
-app.use(express.json())
-
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:4173',
+        'https://www.emira-service.com',
+        'https://emira-service.com',
+        'https://emira-site.vercel.app'
+    ],
+    credentials: true
+}))
+app.use(express.json({ limit: '10mb' }))
 
 // ── Auth Middleware ──
 function requireAuth(req, res, next) {
@@ -227,14 +234,15 @@ app.put('/api/team', requireAuth, (req, res) => {
 
 // ══════════════════════════════════════
 // ── Gmail SMTP Configuration ──
-// You need a Gmail App Password (not your normal password)
-// Go to: https://myaccount.google.com/apppasswords
-// Generate one for "Mail" → "Windows Computer"
+// ══════════════════════════════════════
+
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
-        user: 'emira.devis@gmail.com',        // your Gmail
-        pass: 'aitfhowlggwdcqep',        // Gmail App Password (16 chars)
+        user: 'emira.devis@gmail.com',
+        pass: 'aitfhowlggwdcqep',
     },
 })
 
@@ -314,11 +322,10 @@ function buildEmailHTML({ name, email, phone, subject, message, services, date }
 </html>`
 }
 
-// ── API Endpoint ──
+// ── Contact API Endpoint ──
 app.post('/api/contact', async (req, res) => {
     const { name, email, phone, subject, message, services } = req.body
 
-    // Validation
     if (!name || !email || !subject || !message) {
         return res.status(400).json({ success: false, error: 'Champs requis manquants' })
     }
