@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const nodemailer = require('nodemailer')
+const { Resend } = require('resend')
 const crypto = require('crypto')
 const bcrypt = require('bcryptjs')
 const db = require('./db')
@@ -233,18 +233,10 @@ app.put('/api/team', requireAuth, (req, res) => {
 })
 
 // ══════════════════════════════════════
-// ── Gmail SMTP Configuration ──
+// ── Resend Email Configuration ──
 // ══════════════════════════════════════
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: 'emira.devis@gmail.com',
-        pass: 'aitfhowlggwdcqep',
-    },
-})
+const resend = new Resend(process.env.RESEND_API_KEY || 're_Dt5ScBaR_Lv3p8EdxEB6cca1jvWJKJqUP')
 
 // ── Professional HTML Email Template ──
 function buildEmailHTML({ name, email, phone, subject, message, services, date }) {
@@ -338,16 +330,14 @@ app.post('/api/contact', async (req, res) => {
         minute: '2-digit',
     })
 
-    const mailOptions = {
-        from: `"${name} via EMIRA" <emira.devis@gmail.com>`,
-        replyTo: email,
-        to: 'emira.devis@gmail.com',
-        subject: `EMIRA — ${subject}`,
-        html: buildEmailHTML({ name, email, phone, subject, message, services, date }),
-    }
-
     try {
-        await transporter.sendMail(mailOptions)
+        await resend.emails.send({
+            from: 'EMIRA Contact <onboarding@resend.dev>',
+            to: 'emira.devis@gmail.com',
+            replyTo: email,
+            subject: `EMIRA — ${subject}`,
+            html: buildEmailHTML({ name, email, phone, subject, message, services, date }),
+        })
         console.log(`✅ Email sent: ${subject} from ${name} (${email})`)
         res.json({ success: true, message: 'Email envoyé avec succès' })
     } catch (error) {
