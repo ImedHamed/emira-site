@@ -233,7 +233,7 @@ app.put('/api/team', requireAuth, (req, res) => {
 })
 
 // ══════════════════════════════════════
-// ── Resend Email Configuration ──
+// ── Resend Email Configuration ──//qsdqsdsqdqs
 // ══════════════════════════════════════
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_Dt5ScBaR_Lv3p8EdxEB6cca1jvWJKJqUP')
@@ -349,6 +349,9 @@ app.post('/api/contact', async (req, res) => {
 // ── Start Server ──
 app.listen(PORT, () => {
     console.log(`\n⚡ EMIRA Backend running on http://localhost:${PORT}`)
+    console.log(`📧 Email service: Resend (HTTP API)`)
+    console.log(`📧 Resend API Key: ${process.env.RESEND_API_KEY ? 'SET via ENV' : 'SET via code (hardcoded)'}`)
+    console.log(`📧 Emails will be sent to: emira.devis@gmail.com`)
     console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact`)
     console.log(`🔧 Services API: GET/PUT http://localhost:${PORT}/api/services`)
     console.log(`👥 Clients API: GET/PUT http://localhost:${PORT}/api/clients`)
