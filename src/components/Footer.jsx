@@ -44,7 +44,7 @@ export default function Footer() {
                             <p className="footer-desc">{footerDesc}</p>
                             <div className="footer-badge">
                                 <FaBolt />
-                                <span>SARL au capital 200.000 DT</span>
+                                <span>SARL au capital 250.000 DT</span>
                             </div>
                         </div>
 

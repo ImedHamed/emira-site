@@ -36,8 +36,8 @@ const certifications = [
         icon: <FaCheckCircle />,
     },
     {
-        title: 'SARL — 200.000 DT',
-        desc: { fr: 'Société à Responsabilité Limitée au capital de 200.000 DT', en: 'Limited Liability Company with a capital of 200,000 DT' },
+        title: 'SARL — 250.000 DT',
+        desc: { fr: 'Société à Responsabilité Limitée au capital de 250.000 DT', en: 'Limited Liability Company with a capital of 250,000 DT' },
         icon: <FaBolt />,
     },
 ]
