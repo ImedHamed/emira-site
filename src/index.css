@@ -418,6 +418,19 @@
   background: #253348;
 }
 
+/* ===== Equipment Gallery Dark Mode ===== */
+[data-theme="dark"] .equipment-section {
+  background: #111827;
+}
+
+[data-theme="dark"] .equipment-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .equipment-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
 /* ===== Home Page Sections Dark Mode ===== */
 [data-theme="dark"] .services-preview,
 [data-theme="dark"] .stats-section,
@@ -470,6 +483,31 @@
 [data-theme="dark"] .theme-toggle {
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+}
+
+/* Navbar actions stay white in dark mode */
+[data-theme="dark"] .lang-toggle {
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .lang-code {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .navbar-toggle {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-link.active {
+  color: #ffffff !important;
 }
 
 /* ===== Reset & Base ===== */
