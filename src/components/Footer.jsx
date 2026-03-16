@@ -44,7 +44,7 @@ export default function Footer() {
                             <p className="footer-desc">{footerDesc}</p>
                             <div className="footer-badge">
                                 <FaBolt />
-                                <span>SARL au capital 200.000 DT</span>
+                                <span>SARL au capital 250.000 DT</span>
                             </div>
                         </div>
 
@@ -77,7 +77,7 @@ export default function Footer() {
                                 <li><FaMapMarkerAlt /><span>Route de Sousse Km6, Mégrine 2033</span></li>
                                 <li><FaPhone /><a href="tel:+21671432099">71 432 099</a></li>
                                 <li><FaFax /><span>71 433 458</span></li>
-                                <li><FaEnvelope /><a href="mailto:emira@emira.tn">emira@emira.tn</a></li>
+                                <li><FaEnvelope /><a href="mailto:emira@emira.com.tn">emira@emira.com.tn</a></li>
                             </ul>
                             <div className="footer-emergency">
                                 <FaPhone className="pulse-icon" />

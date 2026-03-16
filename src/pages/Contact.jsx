@@ -159,7 +159,7 @@ export default function Contact() {
                                         <div className="info-icon"><FaEnvelope /></div>
                                         <div>
                                             <h4>{t('contact.email')}</h4>
-                                            <a href="mailto:emira@emira.tn">emira@emira.tn</a><br />
+                                            <a href="mailto:emira@emira.com.tn">emira@emira.com.tn</a><br />
                                             <a href="mailto:emira.maher@yahoo.com">emira.maher@yahoo.com</a>
                                         </div>
                                     </div>
