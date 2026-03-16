@@ -3,6 +3,7 @@ import { FaShieldAlt, FaPhoneAlt, FaChevronRight } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Services.css'
 
@@ -15,7 +16,7 @@ export default function Services() {
     const [loaded, setLoaded] = useState(false)
 
     useEffect(() => {
-        fetch('/api/services')
+        fetch(`${API_URL}/api/services`)
             .then(res => res.json())
             .then(data => {
                 if (data.services) setServicesData(data.services)
