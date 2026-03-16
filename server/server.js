@@ -1,9 +1,11 @@
+
 import express from 'express'
 import cors from 'cors'
 import nodemailer from 'nodemailer'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import db from './db.js'
+
 
 const app = express()
 const PORT = 5000
@@ -238,6 +240,11 @@ const transporter = nodemailer.createTransport({
     },
 })
 
+// ── Resend Email Configuration ──//qsdqsdsqdqs
+// ══════════════════════════════════════
+
+const resend = new Resend(process.env.RESEND_API_KEY || 're_Dt5ScBaR_Lv3p8EdxEB6cca1jvWJKJqUP')
+
 // ── Professional HTML Email Template ──
 function buildEmailHTML({ name, email, phone, subject, message, services, date }) {
     return `
@@ -340,7 +347,13 @@ app.post('/api/contact', async (req, res) => {
     }
 
     try {
-        await transporter.sendMail(mailOptions)
+        await resend.emails.send({
+            from: 'EMIRA Contact <onboarding@resend.dev>',
+            to: 'emira.devis@gmail.com',
+            replyTo: email,
+            subject: `EMIRA — ${subject}`,
+            html: buildEmailHTML({ name, email, phone, subject, message, services, date }),
+        })
         console.log(`✅ Email sent: ${subject} from ${name} (${email})`)
         res.json({ success: true, message: 'Email envoyé avec succès' })
     } catch (error) {
@@ -352,5 +365,14 @@ app.post('/api/contact', async (req, res) => {
 // ── Start Server ──
 app.listen(PORT, () => {
     console.log(`\n⚡ EMIRA Backend running on http://localhost:${PORT}`)
+
     console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact\n`)
+    console.log(`📧 Email service: Resend (HTTP API)`)
+    console.log(`📧 Resend API Key: ${process.env.RESEND_API_KEY ? 'SET via ENV' : 'SET via code (hardcoded)'}`)
+    console.log(`📧 Emails will be sent to: emira.devis@gmail.com`)
+    console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact`)
+    console.log(`🔧 Services API: GET/PUT http://localhost:${PORT}/api/services`)
+    console.log(`👥 Clients API: GET/PUT http://localhost:${PORT}/api/clients`)
+    console.log(`👤 Team API: GET/PUT http://localhost:${PORT}/api/team`)
+    console.log(`🔐 Admin Login: POST http://localhost:${PORT}/api/admin/login\n`)
 })

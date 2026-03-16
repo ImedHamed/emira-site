@@ -24,6 +24,34 @@ const timelineData = {
     ],
 }
 
+const equipmentPhotos = [
+    {
+        src: '/schema-cablage-TGBT.jpg.jpeg',
+        label: { fr: 'Tableau Général Basse Tension (TGBT)', en: 'Main Low Voltage Switchboard (MLVS)' },
+        span: 'wide',
+    },
+    {
+        src: '/b45769af1adfcc640bd2fc9a6e71195f.jpg.jpeg',
+        label: { fr: 'Poste de Transformation', en: 'Transformer Station' },
+        span: 'normal',
+    },
+    {
+        src: '/GROUPE-ELECTROGENE-INGCO-1200W-1.webp',
+        label: { fr: 'Groupe Électrogène', en: 'Power Generator' },
+        span: 'normal',
+    },
+    {
+        src: '/transformateur-cabine-scaled-1-1024x768.jpg.jpeg',
+        label: { fr: 'Cabine de Transformation', en: 'Transformer Cabin' },
+        span: 'normal',
+    },
+    {
+        src: '/images.jpg.jpeg',
+        label: { fr: 'Transformateurs HT/MT', en: 'HV/MV Transformers' },
+        span: 'normal',
+    },
+]
+
 const certifications = [
     {
         title: 'Agrément B2/C3',
@@ -37,7 +65,11 @@ const certifications = [
     },
     {
         title: 'SARL — 250.000 DT',
+<<<<<<< HEAD
         desc: { fr: 'Société à Responsabilité Limitée au capital de 250.000 DT', en: 'Limited Liability Company with a capital of 200,000 DT' },
+=======
+        desc: { fr: 'Société à Responsabilité Limitée au capital de 250.000 DT', en: 'Limited Liability Company with a capital of 250,000 DT' },
+>>>>>>> 1a7b84cd1a55e33b9d39c5885ac8b813d431e2d2
         icon: <FaBolt />,
     },
 ]
@@ -70,6 +102,11 @@ export default function About() {
     const aboutTitle = language === 'en' ? "Over 35 years of electrical expertise" : "Plus de 35 ans d'expertise électrique"
     const ourMotto = language === 'en' ? 'Our motto: ' : 'Notre devise : '
     const govs = language === 'en' ? '15 Governorates' : '15 Gouvernorats'
+    const equipLabel = language === 'en' ? 'Our Equipment' : 'Nos Équipements'
+    const equipTitle = language === 'en' ? 'Professional Equipment' : 'Équipements Professionnels'
+    const equipSubtitle = language === 'en'
+        ? 'We work with the best electrical infrastructure and industrial equipment.'
+        : 'Nous travaillons avec les meilleures infrastructures électriques et équipements industriels.'
     const timelineLabel = language === 'en' ? 'Our Journey' : 'Notre Parcours'
     const timelineTitle = language === 'en' ? "EMIRA's History" : "L'histoire d'EMIRA"
     const teamLabel = language === 'en' ? 'Our Team' : 'Notre Équipe'
@@ -113,6 +150,33 @@ export default function About() {
                                 </div>
                             </div>
                         </ScrollReveal>
+                    </div>
+                </div>
+            </section>
+
+            {/* Equipment Gallery */}
+            <section className="equipment-section">
+                <div className="container">
+                    <ScrollReveal>
+                        <div className="section-title">
+                            <div className="label">{equipLabel}</div>
+                            <h2>{equipTitle}</h2>
+                            <p>{equipSubtitle}</p>
+                        </div>
+                    </ScrollReveal>
+                    <div className="equipment-grid">
+                        {equipmentPhotos.map((photo, i) => (
+                            <ScrollReveal key={i} delay={i * 100}>
+                                <div className={`equipment-card ${photo.span === 'wide' ? 'equipment-card--wide' : ''}`}>
+                                    <div className="equipment-img-wrap">
+                                        <img src={photo.src} alt={photo.label[language] || photo.label.fr} loading="lazy" />
+                                        <div className="equipment-overlay">
+                                            <span className="equipment-label">{photo.label[language] || photo.label.fr}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ScrollReveal>
+                        ))}
                     </div>
                 </div>
             </section>

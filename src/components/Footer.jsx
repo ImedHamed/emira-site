@@ -70,7 +70,6 @@ export default function Footer() {
                             </ul>
                         </div>
 
-                        {/* Contact */}
                         <div className="footer-col">
                             <h4>{t('nav.contact')}</h4>
                             <ul className="footer-contact">
