@@ -1,4 +1,4 @@
-import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPlug, FaTachometerAlt, FaLeaf, FaWrench, FaHardHat, FaBuilding, FaLandmark, FaHotel, FaHospital, FaUniversity, FaMapMarkerAlt, FaUsers, FaAward, FaPhoneAlt } from 'react-icons/fa'
+import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPlug, FaTachometerAlt, FaLeaf, FaWrench, FaHardHat, FaBuilding, FaLandmark, FaHotel, FaHospital, FaUniversity, FaMapMarkerAlt, FaUsers, FaAward, FaPhoneAlt, FaChartLine } from 'react-icons/fa'
 import { HiLightningBolt } from 'react-icons/hi'
 
 const iconMap = {
@@ -22,6 +22,7 @@ const iconMap = {
     FaUsers: <FaUsers />,
     FaAward: <FaAward />,
     FaPhoneAlt: <FaPhoneAlt />,
+    FaChartLine: <FaChartLine />,
 }
 
 export function getIcon(name) {

@@ -4,7 +4,7 @@ import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPhoneAlt, FaChevronR
 import { HiLightningBolt } from 'react-icons/hi'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
-import { API_URL } from '../api'
+import { servicesData } from '../data/staticData'
 import ScrollReveal from '../components/ScrollReveal'
 import './Home.css'
 
@@ -38,7 +38,7 @@ function Counter({ end, suffix = '', duration = 2000 }) {
     return <span ref={ref}>{count}{suffix}</span>
 }
 
-// Fallback clients for the ticker (used before API loads)
+// Fallback clients for the ticker
 const fallbackClients = [
     'STEG', 'Tunisie Télécom', 'ONAS', 'ONT',
     'Ministère de la Santé', 'Ministère de l\'Agriculture',
@@ -47,50 +47,14 @@ const fallbackClients = [
 
 export default function Home() {
     const { language, t } = useLanguage()
-    const [servicesData, setServicesData] = useState([])
-    const [clientNames, setClientNames] = useState(fallbackClients)
+    const clientNames = fallbackClients
 
-    useEffect(() => {
-        // Fetch services for preview (first 6)
-        fetch(`${API_URL}/api/services`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.services) setServicesData(data.services.slice(0, 6))
-            })
-            .catch(() => { })
-
-        // Fetch clients for ticker
-        fetch(`${API_URL}/api/clients`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.publicClients) {
-                    const names = data.publicClients.slice(0, 10).map(c =>
-                        c.name?.fr || (typeof c.name === 'string' ? c.name : '')
-                    ).filter(Boolean)
-                    if (names.length > 0) setClientNames(names)
-                }
-            })
-            .catch(() => { })
-    }, [])
-
-    // Build services for display using API data
-    const services = servicesData.map(srv => ({
+    // Build services for display using static data (first 6)
+    const displayServices = servicesData.slice(0, 6).map(srv => ({
         icon: getIcon(srv.iconName),
         title: srv.title?.[language] || srv.title?.fr || '',
         desc: srv.desc?.[language] || srv.desc?.fr || '',
     }))
-
-    // Fallback services if API hasn't loaded yet
-    const fallbackServicesList = [
-        { icon: <FaBolt />, title: t('home.serviceElec'), desc: t('home.serviceElecDesc') },
-        { icon: <FaTools />, title: t('home.serviceArmoires'), desc: t('home.serviceArmoiresDesc') },
-        { icon: <FaCog />, title: t('home.serviceRebobinage'), desc: t('home.serviceRebobinageDesc') },
-        { icon: <FaIndustry />, title: t('home.serviceDepannage'), desc: t('home.serviceDepannageDesc') },
-        { icon: <HiLightningBolt />, title: t('home.serviceGroupes'), desc: t('home.serviceGroupesDesc') },
-        { icon: <FaShieldAlt />, title: t('home.serviceQualite'), desc: t('home.serviceQualiteDesc') },
-    ]
-
-    const displayServices = services.length > 0 ? services : fallbackServicesList
 
     return (
         <div className="home">

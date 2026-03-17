@@ -311,6 +311,32 @@
           "Quick availability"
         ]
       }
+    },
+    {
+      "id": 13,
+      "iconName": "FaChartLine",
+      "title": {
+        "fr": "Étude du Réseau Électrique",
+        "en": "Electrical Network Study"
+      },
+      "desc": {
+        "fr": "Étude du réseau électrique à l'aide d'un analyseur de réseau électrique de marque Chauvin Arnoux CA8336. Analyse complète de la qualité du réseau et recommandations d'amélioration.",
+        "en": "Electrical network study using a Chauvin Arnoux CA8336 power network analyzer. Complete network quality analysis and improvement recommendations."
+      },
+      "features": {
+        "fr": [
+          "Analyseur Chauvin Arnoux CA8336",
+          "Analyse qualité réseau",
+          "Mesure des harmoniques",
+          "Rapport d'étude détaillé"
+        ],
+        "en": [
+          "Chauvin Arnoux CA8336 analyzer",
+          "Network quality analysis",
+          "Harmonics measurement",
+          "Detailed study report"
+        ]
+      }
     }
   ]
 }

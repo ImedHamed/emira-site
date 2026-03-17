@@ -1,29 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { FaPhone, FaFax, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaClock, FaCheckCircle, FaTimes } from 'react-icons/fa'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
+import { servicesData } from '../data/staticData'
 import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Contact.css'
 
 export default function Contact() {
     const { language, t } = useLanguage()
-    const [servicesList, setServicesList] = useState([])
-
-    useEffect(() => {
-        fetch(`${API_URL}/api/services`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.services) {
-                    setServicesList(data.services.map(srv => ({
-                        id: `srv_${srv.id}`,
-                        label: srv.title?.[language] || srv.title?.fr || '',
-                        icon: getIcon(srv.iconName),
-                    })))
-                }
-            })
-            .catch(() => { })
-    }, [language])
+    const servicesList = servicesData.map(srv => ({
+        id: `srv_${srv.id}`,
+        label: srv.title?.[language] || srv.title?.fr || '',
+        icon: getIcon(srv.iconName),
+    }))
 
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
     const [submitted, setSubmitted] = useState(false)

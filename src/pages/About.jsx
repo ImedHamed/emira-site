@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
 import { FaAward, FaUsers, FaHistory, FaPhoneAlt, FaEnvelope, FaBolt, FaCheckCircle } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
-import { API_URL } from '../api'
+import { teamData } from '../data/staticData'
 import ScrollReveal from '../components/ScrollReveal'
 import './About.css'
 
@@ -73,14 +72,7 @@ const certifications = [
 export default function About() {
     const { language, t } = useLanguage()
     const timeline = timelineData[language] || timelineData.fr
-    const [team, setTeam] = useState([])
-
-    useEffect(() => {
-        fetch(`${API_URL}/api/team`)
-            .then(res => res.json())
-            .then(data => { if (data.team) setTeam(data.team) })
-            .catch(() => { })
-    }, [])
+    const team = teamData
 
     const aboutP1 = language === 'en'
         ? "Founded in 1987, <strong>EMIRA</strong> (Electro Maintenance Intervention Rapide) is a Tunisian company specialized in electrical installations, industrial maintenance and emergency repairs."

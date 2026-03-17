@@ -22,12 +22,32 @@
         },
         {
             "id": 3,
-            "name": "Habib ben AMOR",
+            "name": "Isam Eddine MAATOUGUI",
             "role": {
-                "fr": "Technicien Supérieur Génie Élec.",
-                "en": "Senior Electrical Technician"
+                "fr": "Technicien Supérieur",
+                "en": "Senior Technician"
             },
-            "phone": "98 286 558 / 53 227 260",
+            "phone": "53 832 099",
+            "iconName": "FaUsers"
+        },
+        {
+            "id": 4,
+            "name": "Hosni BOUZID",
+            "role": {
+                "fr": "Technicien",
+                "en": "Technician"
+            },
+            "phone": "54 554 062",
+            "iconName": "FaUsers"
+        },
+        {
+            "id": 5,
+            "name": "Moncef SAIDANI",
+            "role": {
+                "fr": "Technicien",
+                "en": "Technician"
+            },
+            "phone": "52 150 516",
             "iconName": "FaUsers"
         }
     ]
