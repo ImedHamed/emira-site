@@ -4,7 +4,7 @@ import { FaBolt, FaTools, FaCog, FaIndustry, FaShieldAlt, FaPhoneAlt, FaChevronR
 import { HiLightningBolt } from 'react-icons/hi'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
-import { servicesData } from '../data/staticData'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Home.css'
 
@@ -47,10 +47,30 @@ const fallbackClients = [
 
 export default function Home() {
     const { language, t } = useLanguage()
-    const clientNames = fallbackClients
+    const [servicesData, setServicesData] = useState([])
+    const [clientNames, setClientNames] = useState(fallbackClients)
 
-    // Build services for display using static data (first 6)
-    const displayServices = servicesData.slice(0, 6).map(srv => ({
+    useEffect(() => {
+        fetch(`${API_URL}/api/services`)
+            .then(res => res.json())
+            .then(data => { if (data.services) setServicesData(data.services.slice(0, 6)) })
+            .catch(() => {})
+
+        fetch(`${API_URL}/api/clients`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.publicClients) {
+                    const names = data.publicClients.slice(0, 10).map(c =>
+                        c.name?.fr || (typeof c.name === 'string' ? c.name : '')
+                    ).filter(Boolean)
+                    if (names.length > 0) setClientNames(names)
+                }
+            })
+            .catch(() => {})
+    }, [])
+
+    // Build services for display
+    const displayServices = servicesData.map(srv => ({
         icon: getIcon(srv.iconName),
         title: srv.title?.[language] || srv.title?.fr || '',
         desc: srv.desc?.[language] || srv.desc?.fr || '',

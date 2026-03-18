@@ -1,24 +1,29 @@
-
-import express from 'express'
-import cors from 'cors'
-import nodemailer from 'nodemailer'
-import crypto from 'crypto'
-import bcrypt from 'bcryptjs'
-import db from './db.js'
-
+const express = require('express')
+const cors = require('cors')
+const { Resend } = require('resend')
+const crypto = require('crypto')
+const bcrypt = require('bcryptjs')
+const { sql, initDB } = require('./db')
 
 const app = express()
-const PORT = 5000
-
+const PORT = process.env.PORT || 5000
 
 // ── Config ──
 const TOKEN_SECRET = crypto.randomBytes(32).toString('hex')
 const activeTokens = new Set()
 
 // ── Middleware ──
-app.use(cors())
-app.use(express.json())
-
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:4173',
+        'https://www.emira-service.com',
+        'https://emira-service.com',
+        'https://emira-site.vercel.app'
+    ],
+    credentials: true
+}))
+app.use(express.json({ limit: '10mb' }))
 
 // ── Auth Middleware ──
 function requireAuth(req, res, next) {
@@ -37,16 +42,22 @@ function requireAuth(req, res, next) {
 // ── Admin Auth ──
 // ══════════════════════════════════════
 
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body
-    const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get('admin')
-    if (admin && bcrypt.compareSync(password, admin.password_hash)) {
-        const token = crypto.randomBytes(48).toString('hex')
-        activeTokens.add(token)
-        console.log('🔐 Admin logged in')
-        res.json({ success: true, token })
-    } else {
-        res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
+app.post('/api/admin/login', async (req, res) => {
+    try {
+        const { password } = req.body
+        const rows = await sql`SELECT * FROM admins WHERE username = ${'admin'}`
+        const admin = rows[0]
+        if (admin && bcrypt.compareSync(password, admin.password_hash)) {
+            const token = crypto.randomBytes(48).toString('hex')
+            activeTokens.add(token)
+            console.log('🔐 Admin logged in')
+            res.json({ success: true, token })
+        } else {
+            res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
+        }
+    } catch (error) {
+        console.error('❌ Login error:', error)
+        res.status(500).json({ success: false, error: 'Erreur serveur' })
     }
 })
 
@@ -60,14 +71,13 @@ app.post('/api/admin/logout', requireAuth, (req, res) => {
 // ── Services API ──
 // ══════════════════════════════════════
 
-app.get('/api/services', (req, res) => {
+app.get('/api/services', async (req, res) => {
     try {
-        const rows = db.prepare('SELECT * FROM services ORDER BY id').all()
-        const services = rows.map(s => {
-            const features = db.prepare(
-                'SELECT text_fr, text_en FROM service_features WHERE service_id = ? ORDER BY sort_order'
-            ).all(s.id)
-            return {
+        const rows = await sql`SELECT * FROM services ORDER BY id`
+        const services = []
+        for (const s of rows) {
+            const features = await sql`SELECT text_fr, text_en FROM service_features WHERE service_id = ${s.id} ORDER BY sort_order`
+            services.push({
                 id: s.id,
                 iconName: s.icon_name,
                 title: { fr: s.title_fr, en: s.title_en },
@@ -76,8 +86,8 @@ app.get('/api/services', (req, res) => {
                     fr: features.map(f => f.text_fr),
                     en: features.map(f => f.text_en)
                 }
-            }
-        })
+            })
+        }
         res.json({ services })
     } catch (error) {
         console.error('❌ Error reading services:', error)
@@ -85,32 +95,27 @@ app.get('/api/services', (req, res) => {
     }
 })
 
-app.put('/api/services', requireAuth, (req, res) => {
+app.put('/api/services', requireAuth, async (req, res) => {
     try {
         const { services } = req.body
-        const updateAll = db.transaction(() => {
-            db.prepare('DELETE FROM service_features').run()
-            db.prepare('DELETE FROM services').run()
+        await sql`DELETE FROM service_features`
+        await sql`DELETE FROM services`
 
-            const insertService = db.prepare(
-                'INSERT INTO services (id, icon_name, title_fr, title_en, desc_fr, desc_en) VALUES (?, ?, ?, ?, ?, ?)'
-            )
-            const insertFeature = db.prepare(
-                'INSERT INTO service_features (service_id, text_fr, text_en, sort_order) VALUES (?, ?, ?, ?)'
-            )
-
-            for (const s of services) {
-                insertService.run(s.id, s.iconName, s.title.fr, s.title.en, s.desc.fr, s.desc.en)
-                if (s.features) {
-                    const frFeatures = s.features.fr || []
-                    const enFeatures = s.features.en || []
-                    for (let i = 0; i < frFeatures.length; i++) {
-                        insertFeature.run(s.id, frFeatures[i], enFeatures[i] || frFeatures[i], i)
-                    }
+        for (const s of services) {
+            await sql`INSERT INTO services (id, icon_name, title_fr, title_en, desc_fr, desc_en)
+                VALUES (${s.id}, ${s.iconName}, ${s.title.fr}, ${s.title.en}, ${s.desc.fr}, ${s.desc.en})`
+            if (s.features) {
+                const frFeatures = s.features.fr || []
+                const enFeatures = s.features.en || []
+                for (let i = 0; i < frFeatures.length; i++) {
+                    await sql`INSERT INTO service_features (service_id, text_fr, text_en, sort_order)
+                        VALUES (${s.id}, ${frFeatures[i]}, ${enFeatures[i] || frFeatures[i]}, ${i})`
                 }
             }
-        })
-        updateAll()
+        }
+        if (services.length > 0) {
+            await sql`SELECT setval('services_id_seq', (SELECT COALESCE(MAX(id), 1) FROM services))`
+        }
         console.log('✅ Services updated')
         res.json({ success: true, message: 'Services mis à jour' })
     } catch (error) {
@@ -123,11 +128,11 @@ app.put('/api/services', requireAuth, (req, res) => {
 // ── Clients API ──
 // ══════════════════════════════════════
 
-app.get('/api/clients', (req, res) => {
+app.get('/api/clients', async (req, res) => {
     try {
-        const publicRows = db.prepare('SELECT * FROM public_clients ORDER BY id').all()
-        const privateRows = db.prepare('SELECT * FROM private_clients ORDER BY id').all()
-        const regionRows = db.prepare('SELECT name FROM regions ORDER BY id').all()
+        const pubRows = await sql`SELECT * FROM public_clients ORDER BY id`
+        const privRows = await sql`SELECT * FROM private_clients ORDER BY id`
+        const regRows = await sql`SELECT name FROM regions ORDER BY id`
 
         const mapClient = c => ({
             id: c.id,
@@ -137,9 +142,9 @@ app.get('/api/clients', (req, res) => {
         })
 
         res.json({
-            publicClients: publicRows.map(mapClient),
-            privateClients: privateRows.map(mapClient),
-            regions: regionRows.map(r => r.name)
+            publicClients: pubRows.map(mapClient),
+            privateClients: privRows.map(mapClient),
+            regions: regRows.map(r => r.name)
         })
     } catch (error) {
         console.error('❌ Error reading clients:', error)
@@ -147,36 +152,36 @@ app.get('/api/clients', (req, res) => {
     }
 })
 
-app.put('/api/clients', requireAuth, (req, res) => {
+app.put('/api/clients', requireAuth, async (req, res) => {
     try {
         const { publicClients, privateClients, regions } = req.body
-        const updateAll = db.transaction(() => {
-            // ── Public clients ──
-            db.prepare('DELETE FROM public_clients').run()
-            const insertPub = db.prepare(
-                'INSERT INTO public_clients (id, icon_name, name_fr, name_en, desc_fr, desc_en) VALUES (?, ?, ?, ?, ?, ?)'
-            )
-            for (const c of publicClients) {
-                insertPub.run(c.id, c.iconName, c.name.fr, c.name.en, c.desc.fr, c.desc.en)
-            }
 
-            // ── Private clients ──
-            db.prepare('DELETE FROM private_clients').run()
-            const insertPriv = db.prepare(
-                'INSERT INTO private_clients (id, icon_name, name_fr, name_en, desc_fr, desc_en) VALUES (?, ?, ?, ?, ?, ?)'
-            )
-            for (const c of privateClients) {
-                insertPriv.run(c.id, c.iconName, c.name.fr, c.name.en, c.desc.fr, c.desc.en)
-            }
+        // ── Public clients ──
+        await sql`DELETE FROM public_clients`
+        for (const c of publicClients) {
+            await sql`INSERT INTO public_clients (id, icon_name, name_fr, name_en, desc_fr, desc_en)
+                VALUES (${c.id}, ${c.iconName}, ${c.name.fr}, ${c.name.en}, ${c.desc.fr}, ${c.desc.en})`
+        }
+        if (publicClients.length > 0) {
+            await sql`SELECT setval('public_clients_id_seq', (SELECT COALESCE(MAX(id), 1) FROM public_clients))`
+        }
 
-            // ── Regions ──
-            db.prepare('DELETE FROM regions').run()
-            const insertRegion = db.prepare('INSERT INTO regions (name) VALUES (?)')
-            for (const r of regions) {
-                insertRegion.run(r)
-            }
-        })
-        updateAll()
+        // ── Private clients ──
+        await sql`DELETE FROM private_clients`
+        for (const c of privateClients) {
+            await sql`INSERT INTO private_clients (id, icon_name, name_fr, name_en, desc_fr, desc_en)
+                VALUES (${c.id}, ${c.iconName}, ${c.name.fr}, ${c.name.en}, ${c.desc.fr}, ${c.desc.en})`
+        }
+        if (privateClients.length > 0) {
+            await sql`SELECT setval('private_clients_id_seq', (SELECT COALESCE(MAX(id), 1) FROM private_clients))`
+        }
+
+        // ── Regions ──
+        await sql`DELETE FROM regions`
+        for (const r of regions) {
+            await sql`INSERT INTO regions (name) VALUES (${r})`
+        }
+
         console.log('✅ Clients updated')
         res.json({ success: true, message: 'Clients mis à jour' })
     } catch (error) {
@@ -189,9 +194,9 @@ app.put('/api/clients', requireAuth, (req, res) => {
 // ── Team API ──
 // ══════════════════════════════════════
 
-app.get('/api/team', (req, res) => {
+app.get('/api/team', async (req, res) => {
     try {
-        const rows = db.prepare('SELECT * FROM team ORDER BY id').all()
+        const rows = await sql`SELECT * FROM team ORDER BY id`
         const team = rows.map(t => ({
             id: t.id,
             name: t.name,
@@ -206,19 +211,17 @@ app.get('/api/team', (req, res) => {
     }
 })
 
-app.put('/api/team', requireAuth, (req, res) => {
+app.put('/api/team', requireAuth, async (req, res) => {
     try {
         const { team } = req.body
-        const updateAll = db.transaction(() => {
-            db.prepare('DELETE FROM team').run()
-            const insertTeam = db.prepare(
-                'INSERT INTO team (id, name, role_fr, role_en, phone, icon_name) VALUES (?, ?, ?, ?, ?, ?)'
-            )
-            for (const t of team) {
-                insertTeam.run(t.id, t.name, t.role.fr, t.role.en, t.phone, t.iconName)
-            }
-        })
-        updateAll()
+        await sql`DELETE FROM team`
+        for (const t of team) {
+            await sql`INSERT INTO team (id, name, role_fr, role_en, phone, icon_name)
+                VALUES (${t.id}, ${t.name}, ${t.role.fr}, ${t.role.en}, ${t.phone}, ${t.iconName})`
+        }
+        if (team.length > 0) {
+            await sql`SELECT setval('team_id_seq', (SELECT COALESCE(MAX(id), 1) FROM team))`
+        }
         console.log('✅ Team updated')
         res.json({ success: true, message: 'Équipe mise à jour' })
     } catch (error) {
@@ -228,19 +231,7 @@ app.put('/api/team', requireAuth, (req, res) => {
 })
 
 // ══════════════════════════════════════
-// ── Gmail SMTP Configuration ──
-// You need a Gmail App Password (not your normal password)
-// Go to: https://myaccount.google.com/apppasswords
-// Generate one for "Mail" → "Windows Computer"
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'emira.devis@gmail.com',        // your Gmail
-        pass: 'aitfhowlggwdcqep',        // Gmail App Password (16 chars)
-    },
-})
-
-// ── Resend Email Configuration ──//qsdqsdsqdqs
+// ── Resend Email Configuration ──
 // ══════════════════════════════════════
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_Dt5ScBaR_Lv3p8EdxEB6cca1jvWJKJqUP')
@@ -321,11 +312,10 @@ function buildEmailHTML({ name, email, phone, subject, message, services, date }
 </html>`
 }
 
-// ── API Endpoint ──
+// ── Contact API Endpoint ──
 app.post('/api/contact', async (req, res) => {
     const { name, email, phone, subject, message, services } = req.body
 
-    // Validation
     if (!name || !email || !subject || !message) {
         return res.status(400).json({ success: false, error: 'Champs requis manquants' })
     }
@@ -337,14 +327,6 @@ app.post('/api/contact', async (req, res) => {
         hour: '2-digit',
         minute: '2-digit',
     })
-
-    const mailOptions = {
-        from: `"${name} via EMIRA" <emira.devis@gmail.com>`,
-        replyTo: email,
-        to: 'emira.devis@gmail.com',
-        subject: `EMIRA — ${subject}`,
-        html: buildEmailHTML({ name, email, phone, subject, message, services, date }),
-    }
 
     try {
         await resend.emails.send({
@@ -358,21 +340,19 @@ app.post('/api/contact', async (req, res) => {
         res.json({ success: true, message: 'Email envoyé avec succès' })
     } catch (error) {
         console.error('❌ Email error:', error)
-        res.status(500).json({ success: false, error: 'Erreur lors de l\'envoi' })
+        res.status(500).json({ success: false, error: "Erreur lors de l'envoi" })
     }
 })
 
-// ── Start Server ──
-app.listen(PORT, () => {
-    console.log(`\n⚡ EMIRA Backend running on http://localhost:${PORT}`)
-
-    console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact\n`)
-    console.log(`📧 Email service: Resend (HTTP API)`)
-    console.log(`📧 Resend API Key: ${process.env.RESEND_API_KEY ? 'SET via ENV' : 'SET via code (hardcoded)'}`)
-    console.log(`📧 Emails will be sent to: emira.devis@gmail.com`)
-    console.log(`📧 Contact API: POST http://localhost:${PORT}/api/contact`)
-    console.log(`🔧 Services API: GET/PUT http://localhost:${PORT}/api/services`)
-    console.log(`👥 Clients API: GET/PUT http://localhost:${PORT}/api/clients`)
-    console.log(`👤 Team API: GET/PUT http://localhost:${PORT}/api/team`)
-    console.log(`🔐 Admin Login: POST http://localhost:${PORT}/api/admin/login\n`)
+// ── Start Server (after DB init) ──
+initDB().then(() => {
+    app.listen(PORT, () => {
+        console.log(`\n⚡ EMIRA Backend running on http://localhost:${PORT}`)
+        console.log(`🗄️  Database: Neon PostgreSQL (serverless/HTTPS)`)
+        console.log(`📧 Email service: Resend`)
+        console.log(`🔧 Services API: GET/PUT /api/services`)
+        console.log(`👥 Clients API: GET/PUT /api/clients`)
+        console.log(`👤 Team API: GET/PUT /api/team`)
+        console.log(`🔐 Admin Login: POST /api/admin/login\n`)
+    })
 })

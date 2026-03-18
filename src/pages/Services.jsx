@@ -1,14 +1,22 @@
+import { useState, useEffect } from 'react'
 import { FaShieldAlt, FaPhoneAlt, FaChevronRight } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getIcon } from '../components/IconMap'
-import { servicesData } from '../data/staticData'
+import { API_URL } from '../api'
 import ScrollReveal from '../components/ScrollReveal'
 import './Services.css'
 
 export default function Services() {
     const { language, t } = useLanguage()
+    const [servicesData, setServicesData] = useState([])
 
+    useEffect(() => {
+        fetch(`${API_URL}/api/services`)
+            .then(res => res.json())
+            .then(data => { if (data.services) setServicesData(data.services) })
+            .catch(() => {})
+    }, [])
 
     const ctaTitle = language === 'en' ? 'Need a quote or an intervention?' : "Besoin d'un devis ou d'une intervention?"
     const ctaSubtitle = language === 'en' ? 'Our team is at your disposal to study your needs and offer the best solution.' : 'Notre équipe est à votre disposition pour étudier vos besoins et proposer la meilleure solution.'
